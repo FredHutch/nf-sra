@@ -4,7 +4,6 @@
 params.sra = false
 params.bioproject = false
 params.output_folder = false
-params.help = false
 
 def helpMessage() {
     log.info"""
