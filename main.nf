@@ -157,10 +157,7 @@ vdb-config --root -s /repository/user/main/public/root=\$PWD/cache
 prefetch accession
 
 # Get each read
-fastq-dump --split-files \
---defline-seq @\$ac.\$si.\$sg/\$ri \
---defline-qual + \ 
---outdir \$PWD ${accession}
+fastq-dump --split-files --defline-seq @\$ac.\$si.\$sg/\$ri --defline-qual + --outdir \$PWD ${accession}
 
 # If there is a second read, interleave them
 if [[ -s ${accession}_2.fastq ]]; then
