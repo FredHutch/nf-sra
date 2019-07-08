@@ -121,7 +121,7 @@ def get_biosample_runs(biosample_id):
         yield get_sub_key(run, ["EXPERIMENT_PACKAGE_SET", "EXPERIMENT_PACKAGE", "RUN_SET", "RUN", "@accession"])
     
 df = []
-for sample_id in get_samples_from_bioproject("PRJNA385949"):
+for sample_id in get_samples_from_bioproject("${bioproject}"):
     for run in get_sample_info(sample_id):
         df.append(run)
 
