@@ -122,7 +122,7 @@ sra_list.to_csv("${bioproject}.csv", index=None)
     """
     }
 
-    Channel.from(bioproject_csv)
+    Channel.fromPath(bioproject_csv)
     .splitCsv(header: true, sep: ",")
     .map { sample -> sample.sra }
     .set{ accession_ch }
