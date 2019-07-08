@@ -155,28 +155,34 @@ process downloadSraFastq {
 # Set up the cache folder
 echo "Making the cache directory"
 mkdir cache
-echo "Setting the cache"
+echo "Setting the cache to \$PWD/cache"
 vdb-config --root -s /repository/user/main/public/root=\$PWD/cache
+
+# Set the accession string
+accession=\$(echo ${accession} | tr -d '\\n')
 
 # Prefetch the .sra file to the cache
 echo "Prefetching"
-prefetch ${accession}
+prefetch \$accession
 
 # Get each read
 echo "Get the FASTQ files"
-fastq-dump --split-files --defline-seq @\$ac.\$si.\$sg/\$ri --defline-qual + --outdir \$PWD ${accession}
+fastq-dump --split-files --defline-seq @\$ac.\$si.\$sg/\$ri --defline-qual + --outdir \$PWD \$accession
+
+r1=_1.fastq
+r2=_2.fastq
 
 # If there is a second read, interleave them
-if [[ -s ${accession}_2.fastq ]]; then
+if [[ -s \$accession\$r2 ]]; then
     echo "Making paired reads"
-    fastq_pair ${accession}_1.fastq ${accession}_2.fastq
+    fastq_pair \$accession\$r1 \$accession\$r2
     
     echo "Interleave"
-    paste <(gunzip -c ${accession}_1.fastq.paired.fq) <(gunzip -c ${accession}_2.fastq.paired.fq) | paste - - - - | awk -v OFS="\\n" -v FS="\\t" '{print(\$1,\$3,\$5,\$7,\$2,\$4,\$6,\$8)}' | gzip -c > "${accession}.fastq.gz"
+    paste <(gunzip -c \$accession\$r1.paired.fq) <(gunzip -c \$accession\$r2.paired.fq) | paste - - - - | awk -v OFS="\\n" -v FS="\\t" '{print(\$1,\$3,\$5,\$7,\$2,\$4,\$6,\$8)}' | gzip -c > "\$accession.fastq.gz"
 else
     echo "Compressing"
-    mv ${accession}_1.fastq ${accession}.fastq
-    gzip ${accession}.fastq
+    mv \$accession\$r1 \$accession.fastq
+    gzip \$accession.fastq
 fi
 
 """
