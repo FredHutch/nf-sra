@@ -156,7 +156,7 @@ process downloadSraFastq {
 echo "Making the cache directory"
 mkdir cache
 echo "Setting the cache to \$PWD/cache"
-vdb-config --root -s /repository/user/main/public/root=\$PWD/cache
+vdb-config --root -s /repository/user/main/public/root="\$PWD/cache"
 
 # Set the accession string
 accession=\$(echo ${accession} | tr -d '\\n')
