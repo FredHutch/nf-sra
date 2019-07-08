@@ -40,7 +40,7 @@ if ( params.bioproject ){
 
     // Get all of the SRA accessions for a BioProject
     process getBioProjectAccessions {
-    container "quay.io/fhcrc-microbiome/python-pandas:latest"
+    container "quay.io/fhcrc-microbiome/biopython-pandas:latest"
     cpus 4
     memory "8 GB"
     errorStrategy "retry"
@@ -58,91 +58,65 @@ if ( params.bioproject ){
     """
 #!/usr/bin/env python3
 
-import json
-import requests
+from Bio import Entrez
 import pandas as pd
+from time import sleep
+import xmltodict
 
-def get_sub_key(obj, path):
-    for k in path:
-        assert isinstance(obj, dict), "%s is not a dict" % (obj)
-        assert k in obj, "%s not found in %s" % (k, json.dumps(obj, indent=4))
-        obj = obj[k]
-    return obj
+def get_samples_from_bioproject(bioproject):
 
-def check_expected_response(d):
-    assert isinstance(d, dict) and "data" in d, "Did not find a dict with 'data': %s" % (json.dumps(d, indent=4))
-    assert len(d["data"]) > 0, "Found zero items in list: %s" % (json.dumps(d, indent=4))
+    handle = Entrez.esearch(db="bioproject", term=bioproject)
+    search_results = Entrez.read(handle)
+    samples = Entrez.elink(dbfrom="bioproject", id=search_results["IdList"][0], linkname="bioproject_biosample")
+    for linkset in Entrez.parse(samples):
+        for sample in linkset["LinkSetDb"][0]["Link"]:
+            yield sample["Id"]
+            
+def get_sample_info(biosample_id):
+    sleep(1)
+    biosample = Entrez.efetch(db="biosample", id=biosample_id)
+    biosample = xmltodict.parse("".join([line for line in biosample]))
+    
+    d = {}
+    
+    for i in biosample["BioSampleSet"]["BioSample"]["Attributes"]["Attribute"]:
+        if "@attribute_name" in i and "#text" in i:
+            d[i["@attribute_name"]] = i["#text"]
+    
+    for i in biosample["BioSampleSet"]["BioSample"]["Ids"]["Id"]:
+        for k in ["@db", "@db_label"]:
+            if k in i and "#text" in i:
+                d[i[k]] = i["#text"]
+                
+    for sra_accession in get_biosample_runs(biosample_id):
+        d["Run"] = sra_accession
+        yield d
+        
+def get_biosample_runs(biosample_id):
+    sleep(1)
+    handle = Entrez.elink(dbfrom="biosample", id=biosample_id, linkname="biosample_sra")
+    search_results = xmltodict.parse("".join([line for line in handle]))
+    
+    links = search_results["eLinkResult"]["LinkSet"]["LinkSetDb"]
+    if isinstance(links, dict):
+        links = [links]
+    
+    for link in links:
+        sleep(1)
+        run = Entrez.efetch(db="sra", id=link["Link"]["Id"])
+        run = xmltodict.parse("".join([line for line in run]))
+        yield run["EXPERIMENT_PACKAGE_SET"]["EXPERIMENT_PACKAGE"]["RUN_SET"]["RUN"]["@accession"]
+    
+df = []
+for sample_id in get_samples_from_bioproject("PRJNA385949"):
+    for run in get_sample_info(sample_id):
+        df.append(run)
 
-# Use the MGnify API to search for the BioProject
-bioproject_list = requests.get("https://www.ebi.ac.uk/metagenomics/api/v1/studies?accession=%s" % ("${bioproject}")).json()
+df = pd.DataFrame(df)
 
-check_expected_response(bioproject_list)
-assert len(bioproject_list["data"]) == 1, "Found more than one BioProject with that name"
-bioproject = bioproject_list["data"][0]
+df.to_csv("${bioproject}.csv", index=None)
 
-def get_sra(biosample):
-    run = requests.get(
-        get_sub_key(
-            biosample,
-            ["relationships", "runs", "links", "related"]
-        )
-    ).json()
-    check_expected_response(run)
-    for i in run["data"]:
-        yield i["id"]
-
-sra_list = []
-
-# Get the link to the samples for this BioProject
-sample_list = requests.get(
-    get_sub_key(
-        bioproject,
-        ["relationships", "samples", "links", "related"]
-    )
-).json()
-
-check_expected_response(sample_list)
-
-for biosample in sample_list["data"]:
-    biosample_desc = {
-        k: v
-        for k, v in get_sub_key(biosample, ["attributes"]).items()
-        if v is not None and (isinstance(v, str) or isinstance(v, float) or isinstance(v, int))
-    }
-
-    for sra_accession in get_sra(biosample):
-        sra_list.append({
-            "run": sra_accession,
-            **biosample_desc
-        })
-
-while get_sub_key(sample_list, ["links", "next"]) is not None:
-    sample_list = requests.get(
-        get_sub_key(
-            sample_list, 
-            ["links", "next"]
-        )
-    ).json()
-
-    check_expected_response(sample_list)
-
-    for biosample in sample_list["data"]:
-        biosample_desc = {
-            k: v
-            for k, v in get_sub_key(biosample, ["attributes"]).items()
-            if v is not None and (isinstance(v, str) or isinstance(v, float) or isinstance(v, int))
-        }
-
-        for sra_accession in get_sra(biosample):
-            sra_list.append({
-                "run": sra_accession,
-                **biosample_desc
-            })
-
-sra_list = pd.DataFrame(sra_list)
-sra_list.to_csv("${bioproject}.csv", index=None)
-
-print("\\n".join(sra_list["run"].tolist()))
+print("\\n".join(df["Run"].tolist()))
 
     """
     }
