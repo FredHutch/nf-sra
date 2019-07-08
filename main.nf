@@ -149,7 +149,7 @@ process downloadSraFastq {
     output:
     file "${accession}.fastq.gz"
 
-    afterScript "rm *"
+    afterScript "rm -rf *"
 
 """
 # Set up the cache folder
