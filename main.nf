@@ -105,8 +105,9 @@ def get_sample_info(biosample_id):
                 d[i[k]] = i["#text"]
                 
     for sra_accession in get_biosample_runs(biosample_id):
-        d["Run"] = sra_accession
-        yield d
+        if sra_accession is not None:
+            d["Run"] = sra_accession
+            yield d
         
 def get_biosample_runs(biosample_id):
     try:
@@ -116,7 +117,11 @@ def get_biosample_runs(biosample_id):
         handle = Entrez.elink(dbfrom="biosample", id=biosample_id, linkname="biosample_sra")
     search_results = xmltodict.parse("".join([line for line in handle]))
     
-    links = get_sub_key(search_results, ["eLinkResult", "LinkSet", "LinkSetDb"])
+    try:
+        links = get_sub_key(search_results, ["eLinkResult", "LinkSet", "LinkSetDb"])
+    except:
+        return
+
     if isinstance(links, dict):
         links = [links]
     
