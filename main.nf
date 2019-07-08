@@ -86,8 +86,11 @@ def get_samples_from_bioproject(bioproject):
                 yield sample["Id"]
             
 def get_sample_info(biosample_id):
-    sleep(1)
-    biosample = Entrez.efetch(db="biosample", id=biosample_id)
+    try:
+        biosample = Entrez.efetch(db="biosample", id=biosample_id)
+    except:
+        sleep(5)
+        biosample = Entrez.efetch(db="biosample", id=biosample_id)
     biosample = xmltodict.parse("".join([line for line in biosample]))
     
     d = {}
@@ -106,8 +109,11 @@ def get_sample_info(biosample_id):
         yield d
         
 def get_biosample_runs(biosample_id):
-    sleep(1)
-    handle = Entrez.elink(dbfrom="biosample", id=biosample_id, linkname="biosample_sra")
+    try:
+        handle = Entrez.elink(dbfrom="biosample", id=biosample_id, linkname="biosample_sra")
+    except:
+        sleep(5)
+        handle = Entrez.elink(dbfrom="biosample", id=biosample_id, linkname="biosample_sra")
     search_results = xmltodict.parse("".join([line for line in handle]))
     
     links = get_sub_key(search_results, ["eLinkResult", "LinkSet", "LinkSetDb"])
@@ -115,8 +121,11 @@ def get_biosample_runs(biosample_id):
         links = [links]
     
     for link in links:
-        sleep(1)
-        run = Entrez.efetch(db="sra", id=get_sub_key(link, ["Link", "Id"]))
+        try:
+            run = Entrez.efetch(db="sra", id=get_sub_key(link, ["Link", "Id"]))
+        except:
+            sleep(5)
+            run = Entrez.efetch(db="sra", id=get_sub_key(link, ["Link", "Id"]))
         run = xmltodict.parse("".join([line for line in run]))
         yield get_sub_key(run, ["EXPERIMENT_PACKAGE_SET", "EXPERIMENT_PACKAGE", "RUN_SET", "RUN", "@accession"])
     
