@@ -80,16 +80,6 @@ check_expected_response(bioproject_list)
 assert len(bioproject_list["data"]) == 1, "Found more than one BioProject with that name"
 bioproject = bioproject_list["data"][0]
 
-# Get the link to the samples for this BioProject
-sample_list = requests.get(
-    get_sub_key(
-        bioproject,
-        ["relationships", "samples", "links", "related"]
-    )
-).json()
-
-check_expected_response(sample_list)
-
 def get_sra(biosample):
     run = requests.get(
         get_sub_key(
@@ -101,8 +91,17 @@ def get_sra(biosample):
     for i in run["data"]:
         yield i["id"]
 
-
 sra_list = []
+
+# Get the link to the samples for this BioProject
+sample_list = requests.get(
+    get_sub_key(
+        bioproject,
+        ["relationships", "samples", "links", "related"]
+    )
+).json()
+
+check_expected_response(sample_list)
 
 for biosample in sample_list["data"]:
     biosample_desc = {
@@ -116,6 +115,29 @@ for biosample in sample_list["data"]:
             "run": sra_accession,
             **biosample_desc
         })
+
+while get_sub_key(sample_list, ["links", "next"]) is not None:
+    sample_list = requests.get(
+        get_sub_key(
+            sample_list, 
+            ["links", "next"]
+        )
+    ).json()
+
+    check_expected_response(sample_list)
+
+    for biosample in sample_list["data"]:
+        biosample_desc = {
+            k: v
+            for k, v in get_sub_key(biosample, ["attributes"]).items()
+            if v is not None and (isinstance(v, str) or isinstance(v, float) or isinstance(v, int))
+        }
+
+        for sra_accession in get_sra(biosample):
+            sra_list.append({
+                "run": sra_accession,
+                **biosample_desc
+            })
 
 sra_list = pd.DataFrame(sra_list)
 sra_list.to_csv("${bioproject}.csv", index=None)
