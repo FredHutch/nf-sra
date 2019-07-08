@@ -144,7 +144,7 @@ process downloadSraFastq {
     publishDir "${params.output_folder}"
 
     input:
-    val accession from accession_ch
+    val accession from accession_ch.splitText()
 
     output:
     file "${accession}.fastq.gz"
