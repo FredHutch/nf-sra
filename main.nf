@@ -137,11 +137,11 @@ else {
 
 // Download the FASTQ files
 process downloadSraFastq {
-container "quay.io/biocontainers/biopython@sha256:1196016b05927094af161ccf2cd8371aafc2e3a8daa51c51ff023f5eb45a820f"
 cpus 4
 memory "8 GB"
 errorStrategy "retry"
 publishDir "${params.output_folder}"
+    container "quay.io/fhcrc-microbiome/get_sra:v0.4"
 
 input:
 val accession from accession_ch
