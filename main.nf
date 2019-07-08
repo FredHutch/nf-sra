@@ -137,19 +137,19 @@ else {
 
 // Download the FASTQ files
 process downloadSraFastq {
-cpus 4
-memory "8 GB"
-errorStrategy "retry"
-publishDir "${params.output_folder}"
     container "quay.io/fhcrc-microbiome/get_sra:v0.4"
+    cpus 4
+    memory "8 GB"
+    errorStrategy "retry"
+    publishDir "${params.output_folder}"
 
-input:
-val accession from accession_ch
+    input:
+    val accession from accession_ch
 
-output:
-file "${accession}.fastq.gz"
+    output:
+    file "${accession}.fastq.gz"
 
-afterScript "rm *"
+    afterScript "rm *"
 
 """
 # Set up the cache folder
