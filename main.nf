@@ -147,7 +147,7 @@ process downloadSraFastq {
     val accession from accession_ch.splitText()
 
     output:
-    file "${accession}.fastq.gz"
+    file "*.fastq.gz"
 
     afterScript "rm -rf *"
 
@@ -174,6 +174,8 @@ else
     mv \$accession\$r1 \$accession.fastq
     gzip \$accession.fastq
 fi
+
+rm -f \$accession\$r1 \$accession\$r2 \$accession\$r1.paired.fq \$accession\$r2.paired.fq
 
 """
 }
