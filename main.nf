@@ -40,7 +40,7 @@ if ( params.bioproject ){
 
     // Get all of the SRA accessions for a BioProject
     process getBioProjectAccessions {
-    container "quay.io/biocontainers/biopython@sha256:1196016b05927094af161ccf2cd8371aafc2e3a8daa51c51ff023f5eb45a820f"
+    container "quay.io/fhcrc-microbiome/python-pandas:latest"
     cpus 4
     memory "8 GB"
     errorStrategy "retry"
