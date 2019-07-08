@@ -153,7 +153,7 @@ process downloadSraFastq {
 
 """
 # Set the accession string
-accession=\$(echo """${accession}""" | tr -d '\\n')
+accession=\$(echo \"\"\"${accession}\"\"\" | tr -d '\\n')
 
 # Get each read
 echo "Get the FASTQ files"
