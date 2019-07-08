@@ -152,18 +152,8 @@ process downloadSraFastq {
     afterScript "rm -rf *"
 
 """
-# Set up the cache folder
-echo "Making the cache directory"
-mkdir cache
-echo "Setting the cache to \$PWD/cache"
-vdb-config --root -s /repository/user/main/public/root="\$PWD/cache"
-
 # Set the accession string
 accession=\$(echo ${accession} | tr -d '\\n')
-
-# Prefetch the .sra file to the cache
-echo "Prefetching"
-prefetch \$accession
 
 # Get each read
 echo "Get the FASTQ files"
