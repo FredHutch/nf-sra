@@ -4,6 +4,7 @@
 params.sra = false
 params.bioproject = false
 params.output_folder = false
+params.email = "sminot@fredhutch.org"
 
 def helpMessage() {
     log.info"""
@@ -48,6 +49,7 @@ if ( params.bioproject ){
 
     input:
     val bioproject from params.bioproject
+    val email from params.email
     
     output:
     file "${bioproject}.csv" 
@@ -62,6 +64,8 @@ from Bio import Entrez
 import pandas as pd
 from time import sleep
 import xmltodict
+
+Entrez.email = "${email}"
 
 def get_samples_from_bioproject(bioproject):
 
