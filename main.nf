@@ -50,7 +50,8 @@ if ( params.bioproject ){
     val bioproject from params.bioproject
     
     output:
-    file "${bioproject}.csv" into bioproject_csv
+    file "${bioproject}.csv" 
+    stdout accession_ch
 
     afterScript "rm *"
 
@@ -119,13 +120,10 @@ for biosample in sample_list["data"]:
 sra_list = pd.DataFrame(sra_list)
 sra_list.to_csv("${bioproject}.csv", index=None)
 
+print("\\n".join(sra_list["run"].tolist()))
+
     """
     }
-
-    Channel.fromPath(bioproject_csv)
-    .splitCsv(header: true, sep: ",")
-    .map { sample -> sample.sra }
-    .set{ accession_ch }
 
 }
 else {
