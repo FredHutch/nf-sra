@@ -64,17 +64,26 @@ from Bio import Entrez
 import pandas as pd
 from time import sleep
 import xmltodict
+import json
 
 Entrez.email = "${email}"
+
+def get_sub_key(i, key_list):
+    for k in key_list:
+        assert isinstance(i, dict), "%s not a dict" % (json.dumps(i, indent=4))
+        assert k in i, "%s not in %s" % (k, json.dumps(i, indent=4))
+        i = i[k]
+    return i
 
 def get_samples_from_bioproject(bioproject):
 
     handle = Entrez.esearch(db="bioproject", term=bioproject)
     search_results = Entrez.read(handle)
     samples = Entrez.elink(dbfrom="bioproject", id=search_results["IdList"][0], linkname="bioproject_biosample")
-    for linkset in Entrez.parse(samples):
-        for sample in linkset["LinkSetDb"][0]["Link"]:
-            yield sample["Id"]
+    for element in Entrez.parse(samples):
+        for linkset in get_sub_key(element, ["LinkSetDb"]):
+            for sample in get_sub_key(linkset, ["Link"]):
+                yield sample["Id"]
             
 def get_sample_info(biosample_id):
     sleep(1)
@@ -83,11 +92,11 @@ def get_sample_info(biosample_id):
     
     d = {}
     
-    for i in biosample["BioSampleSet"]["BioSample"]["Attributes"]["Attribute"]:
+    for i in get_sub_key(biosample, ["BioSampleSet", "BioSample", "Attributes", "Attribute"]):
         if "@attribute_name" in i and "#text" in i:
             d[i["@attribute_name"]] = i["#text"]
     
-    for i in biosample["BioSampleSet"]["BioSample"]["Ids"]["Id"]:
+    for i in get_sub_key(biosample, ["BioSampleSet", "BioSample", "Ids", "Id"]):
         for k in ["@db", "@db_label"]:
             if k in i and "#text" in i:
                 d[i[k]] = i["#text"]
@@ -101,15 +110,15 @@ def get_biosample_runs(biosample_id):
     handle = Entrez.elink(dbfrom="biosample", id=biosample_id, linkname="biosample_sra")
     search_results = xmltodict.parse("".join([line for line in handle]))
     
-    links = search_results["eLinkResult"]["LinkSet"]["LinkSetDb"]
+    links = get_sub_key(search_results, ["eLinkResult", "LinkSet", "LinkSetDb"])
     if isinstance(links, dict):
         links = [links]
     
     for link in links:
         sleep(1)
-        run = Entrez.efetch(db="sra", id=link["Link"]["Id"])
+        run = Entrez.efetch(db="sra", id=get_sub_key(link, ["Link", "Id"]))
         run = xmltodict.parse("".join([line for line in run]))
-        yield run["EXPERIMENT_PACKAGE_SET"]["EXPERIMENT_PACKAGE"]["RUN_SET"]["RUN"]["@accession"]
+        yield get_sub_key(run, ["EXPERIMENT_PACKAGE_SET", "EXPERIMENT_PACKAGE", "RUN_SET", "RUN", "@accession"])
     
 df = []
 for sample_id in get_samples_from_bioproject("PRJNA385949"):
