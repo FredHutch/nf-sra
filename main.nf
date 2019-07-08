@@ -157,7 +157,7 @@ accession=\$(echo \"\"\"${accession}\"\"\" | tr -d '\\n')
 
 # Get each read
 echo "Get the FASTQ files"
-fastq-dump --split-files --defline-seq @\$ac.\$si.\$sg/\$ri --defline-qual + --outdir \$PWD \$accession
+fastq-dump --split-files --defline-seq '@\$ac.\$si.\$sg/\$ri' --defline-qual + --outdir \$PWD \$accession
 
 r1=_1.fastq
 r2=_2.fastq
