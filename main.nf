@@ -188,7 +188,7 @@ if [[ -s ${accession}\$r2 ]]; then
     fastq_pair ${accession}\$r1 ${accession}\$r2
     
     echo "Interleave"
-    paste <(gunzip -c ${accession}\$r1.paired.fq) <(gunzip -c ${accession}\$r2.paired.fq) | paste - - - - | awk -v OFS="\\n" -v FS="\\t" '{print(\$1,\$3,\$5,\$7,\$2,\$4,\$6,\$8)}' | gzip -c > "${accession}.fastq.gz"
+    paste ${accession}\$r1.paired.fq ${accession}\$r2.paired.fq | paste - - - - | awk -v OFS="\\n" -v FS="\\t" '{print(\$1,\$3,\$5,\$7,\$2,\$4,\$6,\$8)}' | gzip -c > "${accession}.fastq.gz"
 else
     echo "Compressing"
     mv ${accession}\$r1 ${accession}.fastq
