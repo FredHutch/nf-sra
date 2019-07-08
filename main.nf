@@ -174,6 +174,11 @@ process downloadSraFastq {
     afterScript "rm -rf *"
 
 """
+# Cache to the local folder
+mkdir -p ~/.ncbi
+mkdir cache
+echo '/repository/user/main/public/root = "\$PWD/cache"' > ~/.ncbi/user-settings.mkfg
+
 # Set the accession string
 accession=\$(echo \"\"\"${accession}\"\"\" | tr -d '\\n')
 
