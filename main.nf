@@ -1,5 +1,11 @@
 #!/usr/bin/env nextflow
 
+// Initialize empty variables
+params.sra = false
+params.bioproject = false
+params.output_folder = false
+params.help = false
+
 def helpMessage() {
     log.info"""
     Usage:
