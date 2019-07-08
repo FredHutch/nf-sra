@@ -26,7 +26,7 @@ if (params.help){
     exit 0
 }
 
-assert params.sra OR params.bioproject: "Please specify --sra or --bioproject"
+assert params.sra or params.bioproject: "Please specify --sra or --bioproject"
 assert params.output_folder: "Please specify --output_folder"
 
 // Either download a single SRA, or an entire BioProject
