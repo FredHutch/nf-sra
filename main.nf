@@ -120,6 +120,7 @@ def get_biosample_runs(biosample_id):
     try:
         links = get_sub_key(search_results, ["eLinkResult", "LinkSet", "LinkSetDb"])
     except:
+        yield None
         return
 
     if isinstance(links, dict):
