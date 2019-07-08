@@ -140,7 +140,7 @@ process downloadSraFastq {
     publishDir "${params.output_folder}"
 
     input:
-    val accession from accession_ch.splitText()
+    val accession from accession_ch.splitText().map{it -> it.trim()}
 
     output:
     file "*.fastq.gz"
@@ -153,30 +153,27 @@ mkdir -p ~/.ncbi
 mkdir cache
 echo '/repository/user/main/public/root = "\$PWD/cache"' > ~/.ncbi/user-settings.mkfg
 
-# Set the accession string
-accession=\$(echo \"\"\"${accession}\"\"\" | tr -d '\\n')
-
 # Get each read
 echo "Get the FASTQ files"
-fastq-dump --split-files --defline-seq '@\$ac.\$si.\$sg/\$ri' --defline-qual + --outdir \$PWD \$accession
+fastq-dump --split-files --defline-seq '@\$ac.\$si.\$sg/\$ri' --defline-qual + --outdir \$PWD ${accession}
 
 r1=_1.fastq
 r2=_2.fastq
 
 # If there is a second read, interleave them
-if [[ -s \$accession\$r2 ]]; then
+if [[ -s ${accession}\$r2 ]]; then
     echo "Making paired reads"
-    fastq_pair \$accession\$r1 \$accession\$r2
+    fastq_pair ${accession}\$r1 ${accession}\$r2
     
     echo "Interleave"
-    paste <(gunzip -c \$accession\$r1.paired.fq) <(gunzip -c \$accession\$r2.paired.fq) | paste - - - - | awk -v OFS="\\n" -v FS="\\t" '{print(\$1,\$3,\$5,\$7,\$2,\$4,\$6,\$8)}' | gzip -c > "\$accession.fastq.gz"
+    paste <(gunzip -c ${accession}\$r1.paired.fq) <(gunzip -c ${accession}\$r2.paired.fq) | paste - - - - | awk -v OFS="\\n" -v FS="\\t" '{print(\$1,\$3,\$5,\$7,\$2,\$4,\$6,\$8)}' | gzip -c > "${accession}.fastq.gz"
 else
     echo "Compressing"
-    mv \$accession\$r1 \$accession.fastq
-    gzip \$accession.fastq
+    mv ${accession}\$r1 ${accession}.fastq
+    gzip ${accession}.fastq
 fi
 
-rm -f \$accession\$r1 \$accession\$r2 \$accession\$r1.paired.fq \$accession\$r2.paired.fq
+rm -f ${accession}\$r1 ${accession}\$r2 ${accession}\$r1.paired.fq ${accession}\$r2.paired.fq
 
 """
 }
