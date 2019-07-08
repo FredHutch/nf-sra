@@ -153,21 +153,28 @@ process downloadSraFastq {
 
 """
 # Set up the cache folder
+echo "Making the cache directory"
 mkdir cache
+echo "Setting the cache"
 vdb-config --root -s /repository/user/main/public/root=\$PWD/cache
 
 # Prefetch the .sra file to the cache
+echo "Prefetching"
 prefetch ${accession}
 
 # Get each read
+echo "Get the FASTQ files"
 fastq-dump --split-files --defline-seq @\$ac.\$si.\$sg/\$ri --defline-qual + --outdir \$PWD ${accession}
 
 # If there is a second read, interleave them
 if [[ -s ${accession}_2.fastq ]]; then
+    echo "Making paired reads"
     fastq_pair ${accession}_1.fastq ${accession}_2.fastq
     
+    echo "Interleave"
     paste <(gunzip -c ${accession}_1.fastq.paired.fq) <(gunzip -c ${accession}_2.fastq.paired.fq) | paste - - - - | awk -v OFS="\\n" -v FS="\\t" '{print(\$1,\$3,\$5,\$7,\$2,\$4,\$6,\$8)}' | gzip -c > "${accession}.fastq.gz"
 else
+    echo "Compressing"
     mv ${accession}_1.fastq ${accession}.fastq
     gzip ${accession}.fastq
 fi
