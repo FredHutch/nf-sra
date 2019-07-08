@@ -140,7 +140,7 @@ process downloadSraFastq {
     container "quay.io/fhcrc-microbiome/get_sra:v0.4"
     cpus 4
     memory "8 GB"
-    errorStrategy "retry"
+    // errorStrategy "retry"
     publishDir "${params.output_folder}"
 
     input:
