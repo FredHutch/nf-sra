@@ -157,7 +157,7 @@ mkdir cache
 vdb-config --root -s /repository/user/main/public/root=\$PWD/cache
 
 # Prefetch the .sra file to the cache
-prefetch accession
+prefetch ${accession}
 
 # Get each read
 fastq-dump --split-files --defline-seq @\$ac.\$si.\$sg/\$ri --defline-qual + --outdir \$PWD ${accession}
